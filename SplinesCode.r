@@ -55,48 +55,48 @@ predP=predict(mod,data.frame(posi=x_seq, cla=factor(1)), se=T,  inc=c("cla","pos
 
 Region_pos=which((2*predP$fit+(1.645*2*predP$se))<0)
 
-if(length(Region_pos)>0){
-
-if(sum(diff(Region_pos)>1)<1){
-	k_pos=list()
-	k_pos[[1]]=Region_pos
-}else{
-	k_pos=list()
-	useInd=which(diff(Region_pos)>1)
-	i=1
-	while (i<=length(useInd))
-		{
-			k_pos[[i]]=Region_pos[1:useInd[i]]
-			Region_pos=Region_pos[-(1:useInd[i])]	
-			i=i+1	
-		}
-	i=length(k_pos)+1
-	k_pos[[i]]=Region_pos
-	}
-}else{
+	if(length(Region_pos)>0){
+	
+		if(sum(diff(Region_pos)>1)<1){
+			k_pos=list()
+			k_pos[[1]]=Region_pos
+			}else{
+			k_pos=list()
+			useInd=which(diff(Region_pos)>1)
+			i=1
+				while (i<=length(useInd))
+					{
+					k_pos[[i]]=Region_pos[1:useInd[i]]
+					Region_pos=Region_pos[-(1:useInd[i])]	
+					i=i+1	
+					}
+			i=length(k_pos)+1
+			k_pos[[i]]=Region_pos
+			}
+	}else{
 	k_pos=c()
 	}
 
 Region_neg=testpl=which((2*predP$fit-(1.645*2*predP$se))>0)
-if(length(Region_neg)>0){
+	if(length(Region_neg)>0){
 
-if(sum(diff(Region_neg)<1)){
-	k_neg=list()
-	k_neg[[1]]=Region_neg
-}else{
-	k_neg=list()
-	useInd=which(diff(Region_neg)>1)
-	i=1
-	while (i<=length(useInd))
-		{
-			k_neg[[i]]=Region_neg[1:useInd[i]]
-			Region_neg=Region_neg[-(1:useInd[i])]	
-			i=i+1	
-		}
-	i=length(k_neg)+1
-	k_neg[[i]]=Region_neg
-	}
-}else{
+		if(sum(diff(Region_neg)<1)){
+			k_neg=list()
+			k_neg[[1]]=Region_neg
+			}else{
+			k_neg=list()
+			useInd=which(diff(Region_neg)>1)
+			i=1
+				while (i<=length(useInd))
+					{
+					k_neg[[i]]=Region_neg[1:useInd[i]]
+					Region_neg=Region_neg[-(1:useInd[i])]	
+					i=i+1	
+					}
+			i=length(k_neg)+1
+			k_neg[[i]]=Region_neg
+			}
+	}else{
 	k_neg=c()
 	}
 
@@ -107,43 +107,45 @@ k=c(k_pos,k_neg)
 
 #if (k>0){
 
-Result=matrix(0, nrow=length(k), ncol=4)
-colnames(Result)=c("Start", "End", "Area", "P-Value")
+	Result=matrix(0, nrow=length(k), ncol=4)
+	colnames(Result)=c("Start", "End", "Area", "P-Value")
 
-for (i in 1:nrow(Result)){
-Result[i,1]=min(k[[i]])
-Result[i,2]=max(k[[i]])
-Result[i,3]=trapz(x=x_seq[min(k[[i]]):max(k[[i]])], y=abs(2*predP$fit[min(k[[i]]):max(k[[i]])]))
-}
+	for (i in 1:nrow(Result)){
+		Result[i,1]=min(k[[i]])
+		Result[i,2]=max(k[[i]])
+		Result[i,3]=trapz(x=x_seq[min(k[[i]]):max(k[[i]])], y=abs(2*predP$fit[min(k[[i]]):max(k[[i]])]))
+		}
 
-new_dat=permTestNew(dat, t=0, B=Perm)
-areaPSp=matrix(0,Perm,nrow(Result))
-dat2=dat
+	new_dat=permTestNew(dat, t=0, B=Perm)
+	areaPSp=matrix(0,Perm,nrow(Result))
+	dat2=dat
 
 #fine up to here
 #return(Result)
 #}
 
 
-for (i in 1:Perm){
+	for (i in 1:Perm){
         
-        dat2$cla=factor(as.numeric(new_dat$statusp[,i])-1)
-        mod=ssanova(resp~posi*cla, partial=~inde, data=dat2)
-        predPl=predict(mod, data.frame(posi=x_seq, cla=factor(1)), se=T, inc=c("posi","posi:cla"))
-        	for (j in 1:nrow(Result)){
-							areaPSp[i, j]=trapz(x=x_seq[Result[j,1]:Result[j,2]],  y=abs(2*predPl$fit[Result[j,1]:Result[j,2]]))
-						}				        
+        	dat2$cla=factor(as.numeric(new_dat$statusp[,i])-1)
+        	mod=ssanova(resp~posi*cla, partial=~inde, data=dat2)
+        	predPl=predict(mod, data.frame(posi=x_seq, cla=factor(1)), se=T, inc=c("posi","posi:cla"))
+        		for (j in 1:nrow(Result))
+        			{
+				areaPSp[i, j]=trapz(x=x_seq[Result[j,1]:Result[j,2]],  y=abs(2*predPl$fit[Result[j,1]:Result[j,2]]))
+				}				        
         #show(i)
-}
+		}
 
-for (i in 1:nrow(Result)){
-	Result[i,4]=1-mean(Result[i,3]<areaPSp[,i])
-}
-
+	for (i in 1:nrow(Result)){
+		Result[i,4]=1-mean(Result[i,3]<areaPSp[,i])
+	}
+	
 #Here its fine
-if (length(k)==0){
-return("No Region Found")}else{
-	return(Result)}
+	if (length(k)==0){
+		return("No Region Found")}else{
+			return(Result)
+			}
 
 }
 
