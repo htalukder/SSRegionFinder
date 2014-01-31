@@ -117,7 +117,7 @@ Result[i,3]=trapz(x=x_seq[min(k[[i]]):max(k[[i]])], y=abs(2*predP$fit[min(k[[i]]
 }
 
 new_dat=permTestNew(dat, t=0, B=Perm)
-areaPSp=matrix(0,10,nrow(Result))
+areaPSp=matrix(0,Perm,nrow(Result))
 dat2=dat
 
 #fine up to here
@@ -125,7 +125,7 @@ dat2=dat
 #}
 
 
-for (i in 1:10){
+for (i in 1:Perm){
         
         dat2$cla=factor(as.numeric(new_dat$statusp[,i])-1)
         mod=ssanova(resp~posi*cla, partial=~inde, data=dat2)
