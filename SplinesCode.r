@@ -39,8 +39,10 @@ permTestNew<-function(dat,t=0,B=1000){
 ###Function takes in data with response, class, Individual ID, position, and perm # for to perform
 
 
+library(graphics)
+library(tableplot)
 
-SSRegionFinder=function(data, Y, cl, indID, position, Perm){
+SSRegionFinder=function(data, Y, cl, position, permMat, Perm){
 
 require(gss)
 require(pracma)
@@ -49,8 +51,8 @@ require(pracma)
 #cla=factor(data[,cl])
 #inde=data[,indID]
 #posi=data[,position]
-dat=data.frame(resp=data[,Y], cla=factor(data[,cl]), inde=data[,indID], posi=data[,position])
-mod=ssanova(resp~posi*cla,partial=~inde,data=dat)
+dat=data.frame(resp=data[,Y], cla=factor(data[,cl]), posi=data[,position])
+mod=ssanova(resp~posi*cla,data=dat)
 x_seq=seq(min(dat$posi),max(dat$posi),by=1)
 predP=predict(mod,data.frame(posi=x_seq, cla=factor(1)), se=T,  inc=c("cla","posi:cla"))
 
@@ -78,10 +80,10 @@ if(sum(diff(Region_pos)>1)<1){
 	k_pos=c()
 	}
 
-Region_neg=testpl=which((2*predP$fit-(1.645*2*predP$se))>0)
+Region_neg=which((2*predP$fit-(1.645*2*predP$se))>0)
 if(length(Region_neg)>0){
 
-if(sum(diff(Region_neg)<1)){
+if(sum(diff(Region_neg)>1)<1){
 	k_neg=list()
 	k_neg[[1]]=Region_neg
 }else{
@@ -119,36 +121,36 @@ Result[i,2]=max(k[[i]])
 Result[i,3]=trapz(x=x_seq[min(k[[i]]):max(k[[i]])], y=abs(2*predP$fit[min(k[[i]]):max(k[[i]])]))
 }
 
-new_dat=permTestNew(dat, t=0, B=Perm)
-areaPSp=matrix(0, Perm, nrow(Result))
 dat2=dat
-
+permMat=permMat
 #fine up to here
 #return(Result)
 #}
 
+areaPSp=matrix(0, 1000, nrow(Result))
 
 for (i in 1:Perm){
-        
-        dat2$cla=factor(as.numeric(new_dat$statusp[,i])-1)
-        mod=ssanova(resp~posi*cla, partial=~inde, data=dat2)
-        predPl=predict(mod, data.frame(posi=x_seq, cla=factor(1)), se=T, inc=c("posi","posi:cla"))
+
+        dat2$cla=factor(permMat[,i])
+        mod=ssanova(resp~posi*cla, data=dat2)
+        predPl=predict(mod, data.frame(posi=x_seq, cla=factor(1)), se=T, inc=c("cla","posi:cla"))
         	for (j in 1:nrow(Result)){
-							areaPSp[i, j]=trapz(x=x_seq[Result[j,1]:Result[j,2]],  y=abs(2*predPl$fit[Result[j,1]:Result[j,2]]))
+					areaPSp[i, j]=trapz(x=x_seq[Result[j,1]:Result[j,2]],  y=abs(2*predPl$fit[Result[j,1]:Result[j,2]]))
 						}				        
         #show(i)
 }
 
 for (i in 1:nrow(Result)){
-	Result[i,4]=1-mean(Result[i,3]<areaPSp[,i])
+	Result[i,4]=mean(Result[i,3]<areaPSp[,i])
+	Result[i,1]=Result[i,1]-14
+    Result[i,2]=Result[i,2]-14
 }
 
 #Here its fine
 #if (length(k)==0){
 #return("No Region Found")}else{
-	return(Result)}else{
+	return (list(Result, areaPSp))}else{
 	return("No significant region found")
 }
 }
 
-#Example: SSRegionFinder(dat, 1, 2, 3, 4, 20)
